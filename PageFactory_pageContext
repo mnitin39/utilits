@@ -1,0 +1,38 @@
+package com.nitin.pagefactory;
+
+
+import com.nbn.pageobjects.pages.Ivy.IvyPO;
+import java.util.HashMap;
+import java.util.Map;
+
+@Component
+@Scope("cucumber-glue")
+public class PageFactoryt {
+    private static final Map<String, Object> PAGE_CONTEXT = new HashMap<>();
+
+
+    @Autowired
+    private WebDriver driver;
+
+
+    public static Object getContextValue(String key) {
+        return PAGE_CONTEXT.get(key);
+    }
+
+    public static void putContextValue(String key, Object value) {
+        PAGE_CONTEXT.put(key, value);
+    }
+
+    public static void removeContextValue(String key) {
+        PAGE_CONTEXT.remove(key);
+    }
+    
+    public IvyPO getIvyPO() {
+        if (ivyPO == null) {
+            ivyPO = new IvyPO(driver);
+        }
+        return ivyPO;
+    }
+    
+   
+}
