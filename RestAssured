@@ -1,0 +1,36 @@
+package com.nbn.test.utils;
+
+import io.restassured.RestAssured;
+import java.util.HashMap;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+
+public class Weather {
+	
+	@SuppressWarnings("unchecked")
+	public HashMap<String, String> getWeather()
+	{ 
+		
+        
+		return RestAssured.given()
+		.when()
+			.get("https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22")
+		.then()
+			//.log().ifValidationFails(LogDetail.BODY)
+			//.body("coord.lat", equalTo("51.51"))
+		.log().body()
+			.extract()
+            .body().as(HashMap.class);
+	}
+
+	public static void main(String args[])
+	{
+		ObjectMapper mapper = new ObjectMapper();
+		Weather Weather = new Weather();
+		HashMap<String, String> quoteAttributeValues = Weather.getWeather();
+		@SuppressWarnings("unchecked")
+		HashMap<String, Integer> x = mapper.convertValue(quoteAttributeValues.get("main"), HashMap.class);
+		System.out.println(x.get("pressure"));
+	}
+	
+}
