@@ -1,0 +1,59 @@
+package com.nitin.test.utils;
+
+import com.google.common.collect.ImmutableMap;
+import com.nitin.configreader.OauthConfig;
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.http.ContentType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public abstract class OauthConnectedApp {
+
+    private static final Logger LOGGER = LogManager.getLogger(OauthConnectedApp.class);
+
+    protected final String oauthToken;
+    protected final OauthConfig config;
+
+
+    public OauthConnectedApp(OauthConfig oauthConfig){
+    	LOGGER.info("Instantiating OauthConnectedApp");
+        RestAssured.requestSpecification = new RequestSpecBuilder()
+                .setRelaxedHTTPSValidation()
+                .setBaseUri(oauthConfig.getBaseUri())
+                .setBasePath(oauthConfig.getBasePath())
+                .setAccept(ContentType.JSON)
+                .build();
+        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+
+        oauthToken = getOauthToken(oauthConfig);
+        config = oauthConfig;
+        LOGGER.info("Finishing OauthConnectedApp");
+    }
+
+    private String getOauthToken(OauthConfig config){
+
+        return RestAssured.given()
+                .log().uri()
+                .when()
+                .contentType(ContentType.URLENC)//.header("Content-Type", "application/x-www-form-urlencoded")
+                .formParams(
+                        ImmutableMap.<String, Object>builder()
+                                .put("grant_type", "password")
+                                .put("client_id", config.getOauthClientId())
+                                .put("client_secret", config.getOauthClientSecret())
+                                .put("username", config.getOauthUsername())
+                                .put("password", config.getOauthPassword())
+                                .build()
+                )
+                .post(config.getOauthServicePath())
+//                .prettyPeek()
+                .then()
+                .log().body()
+                .spec(new ResponseSpecBuilder().expectStatusCode(200).build())
+                .extract()
+                .body().jsonPath().getString(config.getOauthResponseTokenJsonPath());
+    }
+
+}
