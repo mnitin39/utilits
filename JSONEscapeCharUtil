@@ -1,0 +1,89 @@
+package com.nitin.test.utils;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.StringCharacterIterator;
+
+
+public class JSONEscapeCharUtil {
+
+//	public static void main(String[] args) {
+//		 
+//		// URL Escape Utility
+//		String escapeCharURL = "https://escapeChar.com/this is test";
+//		escapeCharLog("Sample URL: " + escapeCharURL);
+//		escapeCharLog("Escaped URL: " + escapeCharURLEscapeUtil(escapeCharURL));
+// 
+//		// JSON Escape Utility
+//		// We will read file first and then we will do escape char on that
+//		String jsonData = "{\"Event_Type__c\":\"Order Notification\",\"Event_Id__c\":\"ORDACK101\",\"Event_Record_Id__c\":\"b362bd32-0ecd-486a-b608-6facd631b5a1\",\"Source__c\":\"OrderNotifier\",\"Message_Body__c\":{\"metadata\":{\"source\":\"appian-nbncotest\",\"application\":\"Enterprise Ethernet\"},\"headers\":{\"timestamp\":\"2019-08-07T04:58:42.269Z\",\"security\":\"user-agent\",\"activityName\":\"notifyOrder\",\"msgName\":\"ManageProductOrderNotificationNotifyOrderRequest\",\"businessServiceName\":\"ManageProductOrder\",\"businessProcessVersion\":\"V13.0\",\"businessServiceVersion\":\"V2.0\",\"msgType\":\"Notification\",\"accessSeekerID\":\"orderPriority\",\"correlationId\":\"b362bd32-0ecd-486a-b608-6facd631b5a1\",\"communicationPattern\":\"businessServiceName\",\"orderPriority\":\"6\"},\"body\":{\"manageProductOrderNotification\":{\"notificationType\":\"ORDER_ACKNOWLEDGED\",\"productOrder\":{\"id\":\"BPI098823362888\",\"notes\":\"QXBvPkLljL\",\"accessSeekerInteraction\":{\"billingAccountID\":\"BAN442405391304\"},\"interactionStatus\":\"Acknowleged\",\"orderType\":\"Connect\",\"customerRequiredDate\":\"2019-11-04T13:00:00Z\",\"afterHoursAppointment\":\"No\",\"inductionRequired\":\"No\",\"securityClearance\":\"Yes\",\"tradingName\":\"YWi4DhDtlx\",\"heritageSite\":\"No\",\"itemInvolvesContact\":[{\"type\":\"Business\",\"role\":\"eFXoOeDjtc\",\"contactName\":\"MMAGT ZgDAL\",\"emailAddress\":\"naek4j0d@vfdcd.qol\",\"phoneNumber\":\"0396413848\",\"unstructuredAddress\":{\"postcode\":\"5694\",\"addressLine1\":\"SjYrlXIO5W\",\"addressLine2\":\"\",\"addressLine3\":\"\",\"localityName\":\"soQUa\",\"stateTerritoryCode\":\"NSW\"}}],\"productOrderComprisedOf\":{\"action\":\"ADD\",\"itemInvolvesLocation\":{\"id\":\"LOC000000000100\"},\"itemInvolvesProduct\":{\"id\":\"BPI098823362888\",\"term\":\"36 months\",\"zone\":\"Zone 3\",\"serviceRestorationSLA\":\"Premium - 6 (24/7)\",\"accessAvailabilityTarget\":\"99.95% (Dual Uplink/same Network Aggregation element)\",\"productType\":\"EE\",\"templateId\":\"TPL\",\"templateVersion\":\"1.0\"},\"referencesProductOrderItem\":[{\"action\":\"ADD\",\"itemInvolvesProduct\":{\"type\":\"BTD\",\"id\":\"SWBTD9521798212\",\"btdType\":\"Standard\",\"btdMounting\":\"Wall\",\"powerSupply1\":\"AC (240V)\"},\"referencesProductOrderItem\":[{\"action\":\"ADD\",\"itemInvolvesProduct\":{\"type\":\"UNIE\",\"id\":\"UNI020985652636\",\"interfaceBandwidth\":\"1GB\",\"portId\":\"\",\"interfaceType\":\"Copper (Auto-negotiate)\",\"ovcType\":\"Access EVPL\",\"tpId\":\"0x8100\",\"transientId\":\"1\"}}]},{\"action\":\"ADD\",\"itemInvolvesProduct\":{\"type\":\"OVC\",\"id\":\"OVC617827012418\",\"poi\":\"7LAU - LAUNCESTON\",\"nni\":\"NNI090000015449\",\"routeType\":\"Local\",\"sVLanId\":\"0\",\"maximumFrameSize\":\"Jumbo (9000 Bytes)\",\"cosHighBandwidth\":\"200 Mbps\",\"cosMediumBandwidth\":\"200 Mbps\",\"cosLowBandwidth\":\"200 Mbps\",\"uniVLanId\":\"840\",\"ovcTransientId\":\"OVC 01\",\"cosMappingMode\":\"DSCP\"}}]},\"accessSeekerContact\":{\"contactName\":\"\",\"contactPhone\":\"\"}}}}}}";
+// 
+//		// Let's print raw JSON file data
+//		escapeCharLog("\n Sample JSON: " + jsonData.toString());
+// 
+//		// Let's print data after escaping JSON strings
+//		escapeCharLog("Escaped JSON: " + escapeCharJSONEscapeUtil(jsonData.toString()));
+// 
+//	}
+public static void main(String args[]) {
+	int x=20;
+    String sup = (x < 15) ? "small" : (x < 22)? "tiny" : "huge";
+    System.out.println(sup);
+	    } 
+	// Used to ensure that HTTP query strings are in proper form, by escaping special characters such as spaces.
+	// Translates a string into application/x-www-form-urlencoded format using a specific encoding scheme
+	public static String escapeCharURLEscapeUtil(String escapeCharURL) {
+		String escapeCharNewURL = null;
+		try {
+			escapeCharNewURL = URLEncoder.encode(escapeCharURL, "UTF-8");
+		} catch (UnsupportedEncodingException ex) {
+			throw new RuntimeException("UTF-8 not supported", ex);
+		}
+		return escapeCharNewURL;
+	}
+ 
+	// JSON Escape Utility
+	public static String escapeCharJSONEscapeUtil(String escapeCharJSON) {
+		final StringBuilder escapeCharNewJSON = new StringBuilder();
+ 
+		// StringCharacterIterator class iterates over the entire String
+		StringCharacterIterator iterator = new StringCharacterIterator(escapeCharJSON);
+		char myChar = iterator.current();
+ 
+		// DONE = \\uffff (not a character)
+		while (myChar != StringCharacterIterator.DONE) {
+			if (myChar == '\"') {
+				escapeCharNewJSON.append("\\\"");
+			} else if (myChar == '\t') {
+				escapeCharNewJSON.append("\\t");
+			} else if (myChar == '\f') {
+				escapeCharNewJSON.append("\\f");
+			} else if (myChar == '\n') {
+				escapeCharNewJSON.append("\\n");
+			} else if (myChar == '\r') {
+				escapeCharNewJSON.append("\\r");
+			} else if (myChar == '\\') {
+				escapeCharNewJSON.append("\\\\");
+			} else if (myChar == '/') {
+				escapeCharNewJSON.append("\\/");
+			} else if (myChar == '\b') {
+				escapeCharNewJSON.append("\\b");
+			} else {
+ 
+				// nothing matched - just as text as it is.
+				escapeCharNewJSON.append(myChar);
+			}
+			myChar = iterator.next();
+		}
+		return escapeCharNewJSON.toString();
+	}
+ 
+	// Simple log utility
+	private static void escapeCharLog(String escapeCharData) {
+		System.out.println(escapeCharData);
+	}
+
+}
