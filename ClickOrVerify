@@ -1,0 +1,121 @@
+package com.nitin.test.utils.ivy;
+
+import org.assertj.core.api.SoftAssertions;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.FluentWait;
+import java.time.Duration;
+import java.util.List;
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofSeconds;
+public class IVYPageUtils {
+
+	public static final Duration HALF_SECOND_INTERVAL = ofMillis(500);
+	public static final Duration SECOND_INTERVAL = ofMillis(1000);
+	public static boolean softAssertionStatus = true;
+
+    public static void verifyHasContentWithSoftAssertions(SoftAssertions softAssertions, final WebElement element, final String... contents) {
+        final String elementText = element.getText();
+        for (String content : contents) {
+            softAssertions.assertThat(elementText).containsIgnoringCase(content);      
+        }
+    }
+    
+    public static void verifyStringHasContentWithSoftAssertions(SoftAssertions softAssertions, final String elementText, final String... contents) {
+        for (String content : contents) {
+            softAssertions.assertThat(elementText).containsIgnoringCase(content);      
+        }
+    }
+
+	public static void waitTillElementEnabled(WebDriver driver, WebElement element) {
+		Boolean isReady = new FluentWait<>(driver).withTimeout(ofSeconds(60)).pollingEvery(ofSeconds(2))
+				.until(new ExpectedCondition<Boolean>() {
+					public Boolean apply(WebDriver driver) {
+						try {
+							element.isEnabled();
+						} catch (Exception e) {
+							System.out.println("Element not enabled" + element);
+							return false;
+						}
+						System.out.println("Button enabled " + element);
+						return true;
+					}
+				});
+		System.out.println("isEnabled" + isReady);
+	}
+
+    public static void waitAndClickButton(WebDriver driver, WebElement button) {
+ 		Boolean isReady = new FluentWait<>(driver).withTimeout(ofSeconds(60)).pollingEvery(ofSeconds(2))
+ 				.until(new ExpectedCondition<Boolean>(){
+ 					public Boolean apply(WebDriver driver) {
+ 					try {
+ 						button.sendKeys(Keys.ENTER);;
+ 					} catch (Exception e) {
+ 						System.out.println("Button not clickable" + button);
+ 						return false;
+ 					}
+ 					System.out.println("Button  clickable " + button);
+ 					return true;
+ 					}
+ 				});
+ 		System.out.println("isReady"+isReady);
+ 	}
+    
+    public static void waitAndClickButtonUsingJavascript(WebDriver driver, WebElement button) {
+ 		Boolean isReady = new FluentWait<>(driver).withTimeout(ofSeconds(60)).pollingEvery(ofSeconds(2))
+ 				.until(new ExpectedCondition<Boolean>(){
+ 					public Boolean apply(WebDriver driver) {
+ 					try {
+ 						JavascriptExecutor js = (JavascriptExecutor)driver;	
+ 				    	js.executeScript("arguments[0].click();", button);
+ 					}
+ 					catch (Exception e) {
+ 						e.printStackTrace();
+ 						System.out.println("Button not clickable" + button);
+ 						return false;
+ 					}
+ 					System.out.println("Button  clickable " + button);
+ 					return true;
+ 					}
+ 				});
+ 		System.out.println("isReady"+isReady);
+ 	}
+    
+    
+    public static void waitAndClickButtonUsingJavascript(WebDriver driver, By webElementPath) {
+ 		Boolean isReady = new FluentWait<>(driver).withTimeout(ofSeconds(60)).pollingEvery(ofSeconds(2))
+ 				.until(new ExpectedCondition<Boolean>(){
+ 					public Boolean apply(WebDriver driver) {
+ 					try {
+ 						WebElement button= driver.findElement(webElementPath);
+ 						JavascriptExecutor js = (JavascriptExecutor)driver;	
+ 				    	js.executeScript("arguments[0].click();",button);
+ 					}
+ 					catch (Exception e) {
+ 						e.printStackTrace();
+ 						System.out.println("Not clickable" + webElementPath);
+ 						return false;
+ 					}
+ 					System.out.println("WebElement clickable : " + webElementPath);
+ 					return true;
+ 					}
+ 				});
+ 		System.out.println("isReady"+isReady);
+ 	}
+    
+    public static void verifyTableHeadersWithSoftAssertion(SoftAssertions softassertion, final List<WebElement> headers, final String[] expectedHeaders) {
+       // assertThat(headers.size(), is(expectedHeaders.length));
+        softassertion.assertThat(headers.size()).isEqualTo(expectedHeaders.length);
+        WebElement header;
+        for (int i = 0; i < headers.size(); i++) {
+            header = headers.get(i);
+          //  assertThat(header.getText(), is(expectedHeaders[i]));
+            softassertion.assertThat(header.getText()).containsIgnoringCase(expectedHeaders[i]);
+        }
+    }
+
+}
