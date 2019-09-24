@@ -1,0 +1,109 @@
+package com.nitin.test.utils;
+
+import java.time.Clock;
+import java.time.DateTimeException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+
+import static java.time.ZoneOffset.UTC;
+import static java.util.TimeZone.getTimeZone;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+
+public class DateTimeFormatterUtil {
+
+    public static final String TIMESTAMP_FORMAT_WITH_ZONE = "yyyy-MM-dd'T'HH:mm:ssX";
+    public static final String TIMESTAMP_FORMAT_WITHOUT_ZONE = "yyyy-MM-dd'T'HH:mm:ss";
+    public static final String AET_TIME_ZONE = "AET";
+    public static final String GMT_TIME_ZONE = "GMT";
+    public static final ZoneId AET_ZONE_ID = getTimeZone(AET_TIME_ZONE).toZoneId();
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(TIMESTAMP_FORMAT_WITH_ZONE);
+    private static final DateTimeFormatter GMT_DATE_TIME_FORMATTER = DATE_TIME_FORMATTER.withZone(getTimeZone(GMT_TIME_ZONE).toZoneId());
+    private static final DateTimeFormatter AET_DATE_TIME_FORMATTER = DATE_TIME_FORMATTER.withZone(getTimeZone(AET_TIME_ZONE).toZoneId());
+    private static final Clock clock = Clock.system(getTimeZone(GMT_TIME_ZONE).toZoneId());
+
+
+    /**
+     * provide the GMT format of now, e.g. '2020-12-04T16:02:38Z'
+     */
+    public static String gmtTimestamp() {
+        return GMT_DATE_TIME_FORMATTER.format(ZonedDateTime.now(clock));
+    }
+
+    /**
+     * provide the AET format of now, e.g. '2020-12-04T16:02:38+11'
+     */
+    public static String aetTimestamp() {
+        return AET_DATE_TIME_FORMATTER.format(ZonedDateTime.now(clock));
+    }
+
+    /*
+    Accepts java.sqlDate, java.sqlTime, java.sqlTimestamp - all of which extend java.util.Date
+     */
+    public static String gmtTimestamp(Date timestamp) {
+        return timestamp != null ? GMT_DATE_TIME_FORMATTER.format(timestamp.toInstant()) : EMPTY;
+    }
+
+    public static String aetTimestamp(Date timestamp) {
+        return  timestamp != null ? AET_DATE_TIME_FORMATTER.format(timestamp.toInstant()) : EMPTY;
+    }
+
+    public static String gmtTimestamp(ZonedDateTime timestamp) {
+        return timestamp != null ? GMT_DATE_TIME_FORMATTER.format(timestamp.toInstant()) : EMPTY;
+    }
+
+    public static String gmtTimestamp(LocalDateTime timestamp) {
+        return timestamp != null ? GMT_DATE_TIME_FORMATTER.format(timestamp.toInstant(UTC)) : EMPTY;
+    }
+
+    public static String aetTimestamp(ZonedDateTime timestamp) {
+        return  timestamp != null ? AET_DATE_TIME_FORMATTER.format(timestamp.toInstant()) : EMPTY;
+    }
+
+    public static String aetTimestamp(LocalDateTime timestamp) {
+        if (timestamp != null) {
+            ZoneOffset aetOffset = AET_ZONE_ID.getRules().getOffset(timestamp.toInstant(UTC));
+            return AET_DATE_TIME_FORMATTER.format(timestamp.toInstant(aetOffset));
+        }else{
+            return EMPTY;
+        }
+    }
+
+    /**
+     * parse the string back to ZonedDateTime(with zone information), the string must follow the pattern of yyyy-MM-dd'T'HH:mm:ss.SSSX
+     * <p>
+     * e.g. parse("2020-02-01T11:30:15.000Z") returns a ZonedDateTime with time offset GMT (Zero)
+     * e.g. parse("2018-09-04T12:20:59.683+11") return a ZonedDateTime with time offset +11
+     */
+    public static ZonedDateTime parse(String zonedDateTimeStr) {
+        return ZonedDateTime.from(DATE_TIME_FORMATTER.parse(zonedDateTimeStr));
+    }
+
+    /**
+     * parse the string back to GMT ZonedDateTime(zone is always GMT), the string must follow the pattern of yyyy-MM-dd'T'HH:mm:ss.SSSX
+     * <p>
+     * e.g. parse("2020-02-01T11:30:15.000Z") returns a GMT ZonedDateTime of "2020-02-01T11:30:15.000Z"
+     * e.g. parse("2018-09-04T12:20:59.683+11") return a GMT ZonedDateTime of "2018-09-04T01:20:59.683Z"
+     */
+    public static ZonedDateTime parseToGmt(String zonedDateTimeStr) {
+        return ZonedDateTime.from(DATE_TIME_FORMATTER.parse(zonedDateTimeStr)).withZoneSameInstant(getTimeZone(GMT_TIME_ZONE).toZoneId());
+    }
+
+    /**
+     *  check a string is a valid utc timestamp
+     */
+    public static boolean isGmt(String zonedDateTimeStr) {
+        try {
+            ZonedDateTime parsed = parse(zonedDateTimeStr);
+            return 0 == parsed.getOffset().getTotalSeconds() && zonedDateTimeStr.endsWith("Z");
+        } catch (DateTimeException | NullPointerException e) {
+            return false;
+        }
+    }
+
+}
+
