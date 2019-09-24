@@ -1,0 +1,84 @@
+package com.nitin.test.utils;
+
+//used for Salesforce
+import org.aeonbits.owner.ConfigFactory;
+import com.nbn.configreader.TestConfig;
+import com.sforce.soap.partner.Connector;
+import com.sforce.soap.partner.PartnerConnection;
+import com.sforce.soap.partner.QueryResult;
+import com.sforce.soap.partner.sobject.SObject;
+import com.sforce.ws.ConnectorConfig;
+
+
+public class QueryDatabase {
+    
+    private TestConfig testConfig;
+    QueryDatabase queryDatabase;
+    String username;
+    String password;
+    
+    public String getUsername() {
+    	testConfig = ConfigFactory.create(TestConfig.class);
+        username = testConfig.getDatabaseUsername();   
+        System.out.println("userName ==> "+username);
+        return username;      
+    }
+    
+    public String getPassword() {
+    	testConfig = ConfigFactory.create(EnterpriseEthernetConfig.class);
+    	password = testConfig.getDatabasePassword();   
+        System.out.println("password ==> "+password);
+        return password;         
+    }
+
+	public static void main(String[] args) {
+		QueryDatabase queryDatabase = new QueryDatabase();
+
+		String query = "select id, name from df_quote__c where name= 'EEQ-0000022172' limit 1";
+		String salesforceQuoteID = queryDatabase.fetchSalesforceQuoteID(query);
+		System.out.println("###### salesforceQuoteID: " + salesforceQuoteID);
+	}
+	
+	public String fetchField(String query, String field) {
+		queryDatabase = new QueryDatabase();
+		String userName1 = getUsername();
+		String password1 = getPassword();
+		String query1 = query;
+		String field_Id = null;
+		ConnectorConfig config = new ConnectorConfig();
+
+		config.setUsername(userName1);
+		config.setPassword(password1);
+
+		config.setAuthEndpoint("https://test.salesforce.com/services/Soap/u/44.0");
+		config.setServiceEndpoint("https://test.salesforce.com/services/Soap/u/44.0");
+
+		PartnerConnection connection = null;
+
+		try {
+			connection = Connector.newConnection(config);
+			QueryResult result = connection.query(query1);
+			if (result.getSize() > 0) {
+				boolean done = false;
+				int i = 1;
+				while (!done) {
+					for (SObject record : result.getRecords()) {
+						field_Id = (String) record.getField(field);
+					}
+					if (result.isDone()) {
+						done = true;
+					} else {
+						result = connection.queryMore(result.getQueryLocator());
+					}
+				}
+			}
+		} catch (Exception ex)
+
+		{
+			System.out.println("Exception in main : " + ex);
+		}
+		return field_Id;
+
+	}
+
+}
