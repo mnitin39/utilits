@@ -1,0 +1,196 @@
+package com.nbn.nitin.utils;
+
+import com.sforce.soap.partner.LoginResult;
+import com.sforce.soap.partner.PartnerConnection;
+import com.sforce.soap.tooling.ExecuteAnonymousResult;
+import com.sforce.soap.tooling.SoapConnection;
+import com.sforce.ws.ConnectorConfig;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+
+public class ToolingUtilityAPI {
+
+    private static final double APIVersion = 44.0;
+    private static final String productionAPIPath = "https://login.salesforce.com/services/Soap/u/" + String.valueOf(APIVersion) + "/";
+    private static final String sandBoxAPIPath = "https://test.salesforce.com/services/Soap/u/" + String.valueOf(APIVersion) + "/";
+
+
+    /**
+     * Utility method to start Authentication and execution of code
+     * @param userName
+     * @param password
+     * @param isSandBox
+     * @param proxyAddress
+     * @param proxyPort
+     * @param proxyUserName
+     * @param proxyPassword
+     * @param totalLoop
+     * @param pause
+     * @param sourceCode
+     * @throws InterruptedException
+     */
+    public static void execute(String userName, String password, boolean isSandBox,
+                               String proxyAddress, String proxyPort, String proxyUserName, String proxyPassword,
+                               String totalLoop, String pause, String sourceCode) throws InterruptedException {
+
+
+        Thread runApexCode = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    //   log.setVisible(true);
+                    SoapConnection toolCon = new ToolingUtilityAPI().login(userName, password, isSandBox,
+                            proxyAddress, proxyPort, proxyUserName, proxyPassword);
+                    int loopCounter = Integer.valueOf(totalLoop);
+                    int pauseInMili = Integer.valueOf(pause);
+                    int counter = 0;
+                    while (counter < loopCounter) {
+                        ExecuteAnonymousResult result = toolCon.executeAnonymous(sourceCode);
+                        if (result.isCompiled()) {
+                            System.out.println("Code Executed succesfully");
+                        } else {
+                            System.out.println(result.getCompileProblem());
+                        }
+                        counter++;
+                        if (pauseInMili > 0) {
+                            Thread.sleep(pauseInMili);
+                            System.out.println(".... Pause - " + pauseInMili);
+                        }
+                        System.out.println("Loop completed -> " + counter
+                                + ", Remaining Counter -> " + (loopCounter - counter));
+                    }
+                    System.out.println("All Anonymous Code is executed succesfully");
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        };
+
+        runApexCode.start();
+        System.out.println("******Waiting for code response status******");
+        Thread.sleep(3000);
+    }
+
+    /**
+     * Utility method to login for Tooling API
+     *
+     * @param userName
+     * @param password
+     * @param isSandbox
+     * @param proxyAddress
+     * @param port
+     * @param proxyUserName
+     * @param proxyPassword
+     * @return
+     * @throws Exception
+     */
+    public SoapConnection login(String userName, String password, boolean isSandbox,
+                                String proxyAddress, String port, String proxyUserName, String proxyPassword
+    ) throws Exception {
+        System.out.println("*****Inside Soap login method****");
+        ConnectorConfig config = getConfigForLogin(userName, password, isSandbox,
+                proxyAddress, port, proxyUserName, proxyPassword);
+        LoginResult loginResult = null;
+        try {
+            loginResult = (new PartnerConnection(config)).login(userName, password);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Unable to login due to proxy");
+        }
+        config.setServiceEndpoint(getToolingAPIURLFromMetadata(loginResult.getMetadataServerUrl()));
+        config.setSessionId(loginResult.getSessionId());
+        System.out.println("*****Finish Soap login method****");
+        return new SoapConnection(config);
+    }
+
+    /**
+     * Convert https://cs21.salesforce.com/services/Soap/m/30.0/00Dq00000009cFC
+     * to https://cs21.salesforce.com/services/Soap/T/30.0/00Dq00000009cFC Else
+     * we will get error saying operation is not supported
+     *
+     * @param url
+     * @return
+     */
+    private String getToolingAPIURLFromMetadata(String url) {
+        return url.replace("/m/", "/T/");
+    }
+
+    private static ConnectorConfig getConfigForLogin(String userName, String password, boolean isSandbox,
+                                                     String proxyAddress, String port, String proxyUserName, String proxyPassword) {
+        ConnectorConfig config = null;
+        try {
+            config = new ConnectorConfig();
+            config.setUsername(userName);
+            config.setPassword(password);
+            if (isSandbox) {
+                config.setAuthEndpoint(sandBoxAPIPath);
+            } else {
+                config.setAuthEndpoint(productionAPIPath);
+            }
+            // config.setTraceFile("src/"+sfdcUserName+".txt");
+            if (proxyAddress != null && !proxyAddress.trim().equals("")) {
+                config.setProxy(proxyAddress, Integer.valueOf(port));
+                config.setProxyUsername(proxyUserName);
+                config.setProxyPassword(proxyPassword);
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+        return config;
+    }
+
+    /**
+     * If user wants help in command-line mode, then print below information on console
+     * @param args Command line argument
+     */
+    public static boolean provideHelp(String[] args) {
+        if (args.length > 0 && args[0].toLowerCase().contains("help")) {
+            System.out.println("Create XML File by name - commandLine.config" + "\n" +
+                    "Format of XML File :" + "\n" +
+                    "<apexconfig>" + "\n" +
+                    "    <username>YOURUSERNAME</username>" + "\n" +
+                    "    <password>YOUR PASSWORD + SECURITY TOKEN</password>" + "\n" +
+                    "    <isSandbox>TRUE/FALSE</isSandbox>" + "\n" +
+                    "    <proxyAddress>ADDRESS OF PROXY SERVER IF APPLICABLE</proxyAddress>" + "\n" +
+                    "    <proxyPort>PORT OF PROXY SERVER IF APPLICABLE</proxyPort>" + "\n" +
+                    "    <proxyUserName>USERNAME OF PROXY SERVER IF APPLICABLE</proxyUserName>" + "\n" +
+                    "    <proxyPassword>PASSWORD OF PROXY SERVER IF APPLICABLE</proxyPassword>" + "\n" +
+                    "    <apexFile>PATH OF APEX FILE TO EXECUTE</apexFile>" + "\n" +
+                    "    <apexFile>PATH OF APEX FILE TO EXECUTE</apexFile>" + "\n" +
+                    "    <apexFile>PATH OF APEX FILE TO EXECUTE</apexFile>" + "\n" +
+                    "    <repeat>How many time code should be executed</repeat>" + "\n" +
+                    "    <pause>interval between each execution in ms</pause>" + "\n" +
+                    "</apexconfig>" + "\n" +
+                    "---------------------------------------------" + "\n" +
+                    "");
+            return true;
+        }
+        return false;
+    }
+
+
+    /**
+     * This method returns code
+     * @param apexFile
+     * @return
+     */
+    static String readCode(String apexFile) {
+        StringBuilder retVal = new StringBuilder();
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(apexFile));
+            String line = in.readLine();
+            while (line != null) {
+                retVal.append(line + "\n");
+                line = in.readLine();
+            }
+            in.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("Source code path in file \"commandLine.config\" is not correct. Trying to search file - " + apexFile);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return retVal.toString();
+    }
+}
