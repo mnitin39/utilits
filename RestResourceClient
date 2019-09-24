@@ -1,0 +1,103 @@
+package com.nitin.test.utils;
+
+import com.nitin.configreader.OauthConfig;
+import io.restassured.RestAssured;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.http.ContentType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.Map;
+
+
+public abstract class RestResourceClient extends OauthConnectedApp {
+
+    private static final Logger LOGGER = LogManager.getLogger(RestResourceClient.class);
+
+    public RestResourceClient(OauthConfig restResourceConfig){
+        super(restResourceConfig);
+        LOGGER.info("Instantiated RestResourceClient");
+    }
+
+    /*
+        target REST resource should return a JSON map of values
+     */
+    public Map<String, String> getObjectValueMap(String resourcePath){
+
+        return RestAssured.given().auth().preemptive().oauth2(oauthToken).log().uri() //all() log request
+                .when()
+                .get(resourcePath)
+//                .prettyPeek() //log response
+                .then().log().body()
+                .spec(new ResponseSpecBuilder().expectStatusCode(200).build())
+                .extract()
+                .body().as(Map.class);
+
+    }
+
+    /*
+        target REST resource should process payload eg. handle bulk upload/insert of data
+     */
+    public int post(String resourcePath, ContentType contentType, String payload) {
+
+        return RestAssured.given().auth().preemptive().oauth2(oauthToken).log().uri()
+                .when()
+                .contentType(contentType)
+                .body(payload)
+                .post(resourcePath)
+//                .prettyPeek()
+                .then().log().body()
+                .spec(new ResponseSpecBuilder().expectStatusCode(201).build())
+                .extract()
+                .statusCode();
+    }
+
+    public static void main(String[] args){
+
+        OauthConfig config = new OauthConfig() {
+
+            @Override
+            public String getBaseUri() {
+                return "https://nbn--argodev.cs57.my.salesforce.com/";
+            }
+            @Override
+            public String getBasePath() {
+                return "services/";
+            }
+            @Override
+            public String getOauthServicePath() {
+                return "oauth2/token";
+            }
+            @Override
+            public String getOauthClientId() {
+                return "3MVG959Nd8JMmavQT2.ckIfxTakY6T6nAONUUXIAExgVsJ5_bMvZCdgA5o0I3Qx2kz3fs3gki1026tBp3iBHl";
+            }
+            @Override
+            public String getOauthClientSecret() {
+                return "D854E5422F7987754B3BF8B2D0557A6FD61E4E514F629031FA6B7D044A727343";
+            }
+            @Override
+            public String getOauthUsername() {
+                return "selenium@nbnco.com.au";
+            }
+            @Override
+            public String getOauthPassword() {
+                return "welcome1qSeIm7ew5WM7YPy7oT7DzXjN";
+            }
+            @Override
+            public String getOauthResponseTokenJsonPath() {
+                return "access_token";
+            }
+        };
+
+        RestResourceClient restResourceClient = new RestResourceClient(config){};
+
+        //test REST resource ie. get feature toggles or extract attributes of an instance of a custom object
+
+        Map<String, String> toggles = restResourceClient.getObjectValueMap("apexrest/releasetoggles");
+        Map<String, String> quoteAttributeValueMap = restResourceClient.getObjectValueMap("ENDpoint_name");
+        System.out.println( quoteAttributeValueMap.get("attribute_name") );
+
+    }
+
+}
